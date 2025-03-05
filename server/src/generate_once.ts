@@ -18,8 +18,7 @@ const options = program.opts();
         process.exit(0);
     }
     let contentBinding = options.dataSyncId || options.visitorData;
-    if (options.dataSyncId)
-        console.error('-d is deprecated, use -v instead');
+    if (options.dataSyncId) console.error("-d is deprecated, use -v instead");
     const proxy = options.proxy || "";
     const verbose = options.verbose || false;
 
@@ -29,7 +28,8 @@ const options = program.opts();
     }
 
     if (!contentBinding)
-        contentBinding = await sessionManager.generateVisitorData() || process.exit(1);
+        contentBinding =
+            (await sessionManager.generateVisitorData()) || process.exit(1);
     log(`Received request for visitor data: '${contentBinding}'`);
 
     try {

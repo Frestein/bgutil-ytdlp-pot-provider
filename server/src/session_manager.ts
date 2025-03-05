@@ -45,7 +45,9 @@ export class SessionManager {
     }
 
     async generateVisitorData(): Promise<string | null> {
-        this.logger.log(`Received request for visitor data, grabbing from Innertube`);
+        this.logger.log(
+            `Received request for visitor data, grabbing from Innertube`,
+        );
         const innertube = await Innertube.create({ retrieve_player: false });
         const visitorData = innertube.session.context.client.visitorData;
         if (!visitorData) {

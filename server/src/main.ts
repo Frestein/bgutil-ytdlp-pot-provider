@@ -28,12 +28,16 @@ httpServer.post("/get_pot", async (request, response) => {
     const proxy: string = request.body.proxy;
     let contentBinding = dataSyncId || visitorData;
     if (dataSyncId)
-        console.log('Passing data_sync_id is deprecated, use visitor_data instead');
+        console.log(
+            "Passing data_sync_id is deprecated, use visitor_data instead",
+        );
 
     if (!contentBinding) {
         const generatedVisitorData = await sessionManager.generateVisitorData();
         if (!generatedVisitorData) {
-            response.status(500).send({ error: "Error generating visitor data" });
+            response
+                .status(500)
+                .send({ error: "Error generating visitor data" });
             return;
         }
         contentBinding = generatedVisitorData;
