@@ -28,6 +28,7 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
     _SUPPORTED_FEATURES = (Features.NO_PROXY, Features.ALL_PROXY)
     _SUPPORTED_CONTEXTS = ('gvs', 'player')
     _GETPOT_TIMEOUT = 20.0
+    _GET_VSN_TIMEOUT = 5.0
     _GETPOT_ENV = {
         **os.environ,
         'TOKEN_TTL': '0',
@@ -95,6 +96,15 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
         pot = token_data['po_token']
         self._logger.debug(f'Retrieved {context} PO Token from cache: {pot}')
         return pot
+
+    def _check_version(self, got_version, *, default='unknown', name):
+        if got_version != self.VERSION:
+            self._logger.warning(
+                f'The provider plugin and the {name} are on different versions, '
+                f'this may cause compatibility issues. '
+                f'Please ensure they are on the same version. '
+                f'(plugin: {self.VERSION}, {name}: {got_version or 'unknown'})',
+                once=True)
 
     def _validate_get_pot(
         self,

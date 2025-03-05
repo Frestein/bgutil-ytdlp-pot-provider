@@ -34,7 +34,7 @@ else:
                 'baseurl', default='http://127.0.0.1:4416')
             try:
                 response = ydl.urlopen(Request(
-                    f'{base_url}/ping', extensions={'timeout': 5.0}, proxies={'all': None}))
+                    f'{base_url}/ping', extensions={'timeout': self._GET_VSN_TIMEOUT}, proxies={'all': None}))
             except Exception as e:
                 self._warn_and_raise(
                     f'Error reaching GET /ping (caused by {e.__class__.__name__})', raise_from=e)
@@ -44,13 +44,7 @@ else:
                 self._warn_and_raise(
                     f'Error parsing response JSON (caused by {e!r})'
                     f', response: {response.read()}', raise_from=e)
-            if response.get('version') != self.VERSION:
-                self._logger.warning(
-                    f'The provider plugin and the HTTP server are on different versions, '
-                    f'this may cause compatibility issues. '
-                    f'Please ensure they are on the same version. '
-                    f'(plugin: {self.VERSION}, server: {response.get("version", "unknown")})',
-                    once=True)
+            self._check_version(response.get('version'), name='HTTP server')
             self.base_url = base_url
 
         def _get_pot(

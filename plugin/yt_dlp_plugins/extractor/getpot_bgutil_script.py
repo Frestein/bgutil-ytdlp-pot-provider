@@ -25,6 +25,19 @@ else:
             return os.path.join(
                 home, 'bgutil-ytdlp-pot-provider', 'server', 'build', 'generate_once.js')
 
+        def _check_script_version(self):
+            stdout, stderr, returncode = Popen.run(
+                [self.node_path, self.script_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                env=self._GETPOT_ENV, timeout=self._GET_VSN_TIMEOUT)
+            if returncode:
+                self._logger.warning(
+                    f'Failed to check script version. '
+                    f'Script returned {returncode} exit status. '
+                    f'Script stdout: {stdout}; Script stderr: {stderr}',
+                    once=True)
+            else:
+                self._check_version(stdout.strip(), name='script')
+
         def _real_validate_get_pot(
             self,
             client: str,
@@ -50,6 +63,7 @@ else:
                 self._warn_and_raise('node is not in PATH')
             self.script_path = script_path
             self.node_path = node_path
+            self._check_script_version()
 
         def _get_pot(
             self,

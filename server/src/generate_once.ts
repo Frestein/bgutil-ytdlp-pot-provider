@@ -1,16 +1,22 @@
 import { SessionManager } from "./session_manager";
+import { VERSION } from "./version";
 import { Command } from "@commander-js/extra-typings";
 
 const program = new Command()
     .option("-v, --visitor-data <visitordata>")
     .option("-d, --data-sync-id <data-sync-id>")
     .option("-p, --proxy <proxy-all>")
+    .option("--version")
     .option("--verbose");
 
 program.parse();
 const options = program.opts();
 
 (async () => {
+    if (options.version || false) {
+        console.log(VERSION);
+        process.exit(0);
+    }
     const visitorData = options.visitorData;
     const dataSyncId = options.dataSyncId;
     const proxy = options.proxy || "";
