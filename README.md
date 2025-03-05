@@ -54,22 +54,17 @@ node build/main.js
 ```
 
 <details>
-  <summary>Server Endpoints/Environment Variables</summary>
-
-**Environment Variables**
-
-- **TOKEN_TTL**: The time in hours for a PO token to be considered valid. While there are no definitive answers on how long a token is valid, it has been observed to be valid for atleast a couple of days. Default: 6
+  <summary>Server Endpoints</summary>
 
 **Endpoints**
 
 - **POST /get_pot**: Accepts a `visitor_data` (unauthenticated), `data_sync_id` (authenticated) or an empty object in the request JSON. If no identifier is passed, a new unauthenticated `visitor_data` will be generated. Returns `po_token` and the associated identifier `visit_identifier`.
-- **POST /invalidate_caches**: Resets the PO token cache, forcing new tokens to be generated on next fetch.
 - **GET /ping**: Ping the server. The response includes:
   - `logging`: Logging verbosity(`normal` or `verbose`)
-  - `token_ttl_hours`: The current applied `TOKEN_TTL` value, defaults to 6.
   - `server_uptime`: Uptime of the server process.
   - `version`: Current server version.
-  </details>
+
+</details>
 
 #### (b) Generation Script Option
 

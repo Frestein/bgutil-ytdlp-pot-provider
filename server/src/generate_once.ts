@@ -1,9 +1,6 @@
-import { SessionManager, YoutubeSessionDataCaches } from "./session_manager";
+import { SessionManager } from "./session_manager";
 import { Command } from "@commander-js/extra-typings";
-import * as fs from "fs";
-import * as path from "path";
 
-const CACHE_PATH = path.resolve(__dirname, "..", "cache.json");
 const program = new Command()
     .option("-v, --visitor-data <visitordata>")
     .option("-d, --data-sync-id <data-sync-id>")
@@ -19,28 +16,8 @@ const options = program.opts();
     const proxy = options.proxy || "";
     const verbose = options.verbose || false;
     let visitIdentifier: string;
-    const cache: YoutubeSessionDataCaches = {};
-    if (fs.existsSync(CACHE_PATH)) {
-        try {
-            const parsedCaches = JSON.parse(
-                fs.readFileSync(CACHE_PATH, "utf8"),
-            );
-            for (const visitIdentifier in parsedCaches) {
-                const parsedCache = parsedCaches[visitIdentifier];
-                if (parsedCache) {
-                    cache[visitIdentifier] = {
-                        poToken: parsedCache.poToken,
-                        generatedAt: new Date(parsedCache.generatedAt),
-                        visitIdentifier,
-                    };
-                }
-            }
-        } catch (e) {
-            console.warn(`Error parsing cache. e = ${e}`);
-        }
-    }
 
-    const sessionManager = new SessionManager(verbose, cache);
+    const sessionManager = new SessionManager(verbose);
     function log(msg: string) {
         if (verbose) console.log(msg);
     }
@@ -64,22 +41,7 @@ const options = program.opts();
             visitIdentifier,
             proxy,
         );
-
-        try {
-            fs.writeFileSync(
-                CACHE_PATH,
-                JSON.stringify(
-                    sessionManager.getYoutubeSessionDataCaches(true),
-                ),
-                "utf8",
-            );
-        } catch (e) {
-            console.warn(
-                `Error writing cache. err.name = ${e.name}. err.message = ${e.message}. err.stack = ${e.stack}`,
-            );
-        } finally {
-            console.log(JSON.stringify(sessionData));
-        }
+        console.log(JSON.stringify(sessionData));
     } catch (e) {
         console.error(
             `Failed while generating POT. err.name = ${e.name}. err.message = ${e.message}. err.stack = ${e.stack}`,
