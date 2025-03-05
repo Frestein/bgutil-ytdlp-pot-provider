@@ -62,7 +62,7 @@ node build/main.js
 
 **Endpoints**
 
-- **POST /get_pot**: Accepts a `visitor_data` (unauthenticated), `data_sync_id` (authenticated) or an empty body in the request body. If no identifier is passed, a new unauthenticated `visitor_data` will be generated. Returns `po_token` and the associated identifier `visit_identifier`.
+- **POST /get_pot**: Accepts a `visitor_data` (unauthenticated), `data_sync_id` (authenticated) or an empty object in the request JSON. If no identifier is passed, a new unauthenticated `visitor_data` will be generated. Returns `po_token` and the associated identifier `visit_identifier`.
 - **POST /invalidate_caches**: Resets the PO token cache, forcing new tokens to be generated on next fetch.
 - **GET /ping**: Ping the server. The response includes:
   - `logging`: Logging verbosity(`normal` or `verbose`)
@@ -76,7 +76,7 @@ node build/main.js
 1. Transpile the generation script to Javascript:
 
 ```shell
-# If you want to use this method without specifying `getpot_bgutil_script` extractor argument
+# If you want to use this method without specifying `script` extractor argument
 # on each yt-dlp invocation, clone/extract the source code into your home directory.
 # Replace `~` with `%USERPROFILE%` if using Windows
 cd ~
@@ -114,21 +114,24 @@ If you want to change the port number used by the provider server, use the `--po
 node build/main.js --port 8080
 ```
 
-If changing the port or IP used for the provider server, pass it to yt-dlp via `getpot_bgutil_baseurl`
+If changing the port or IP used for the provider server, pass it to yt-dlp via `baseutl`
 
 ```shell
---extractor-args "youtube:getpot_bgutil_baseurl=http://127.0.0.1:8080"
+--extractor-args "youtube-bgutilhttp:baseurl=http://127.0.0.1:8080"
 ```
 
 ---
 
 If using option (b) script for the provider, with the default script location in your home directory (i.e: `~/bgutil-ytdlp-pot-provider` or `%USERPROFILE%\bgutil-ytdlp-pot-provider`), you can also use yt-dlp like normal.
 
-If you installed the script in a different location, pass it as the extractor argument `getpot_bgutil_script` to `youtube` for each yt-dlp call.
+If you installed the script in a different location, pass it as the extractor argument `script` to `youtube-bgutilscript` for each yt-dlp call.
 
 ```shell
---extractor-args "youtube:getpot_bgutil_script=$WORKSPACE/bgutil-ytdlp-pot-provider/server/build/generate_once.js"
+--extractor-args "youtube-bgutilscript:script=$WORKSPACE/bgutil-ytdlp-pot-provider/server/build/generate_once.js"
 ```
+
+# TODO
+youtube-bgutilcache and ttl
 
 ---
 

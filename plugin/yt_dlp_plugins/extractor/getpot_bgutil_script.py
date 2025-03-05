@@ -25,7 +25,7 @@ else:
             return os.path.join(
                 home, 'bgutil-ytdlp-pot-provider', 'server', 'build', 'generate_once.js')
 
-        def _validate_get_pot(
+        def _real_validate_get_pot(
             self,
             client: str,
             ydl: YoutubeDL,
@@ -38,8 +38,8 @@ else:
             ytcfg=None,
             **kwargs,
         ):
-            script_path = ydl.get_info_extractor('Youtube')._configuration_arg(
-                'getpot_bgutil_script', [self._default_script_path], casesense=True)[0]
+            # validate script
+            script_path = self._get_config_setting('script', default=self._default_script_path)
             if not os.path.isfile(script_path):
                 self._warn_and_raise(
                     f"Script path doesn't exist: {script_path}")
@@ -64,15 +64,6 @@ else:
             ytcfg=None,
             **kwargs,
         ) -> str:
-            yt_ie = ydl.get_info_extractor('Youtube')
-            content_binding = self._get_content_binding(
-                client=client, context=context, data_sync_id=data_sync_id,
-                visitor_data=visitor_data, video_id=video_id)
-            if (cached_pot := self._get_cached_token(
-                    yt_ie, context=context,
-                    content_binding=content_binding)) is not None:
-                return cached_pot
-
             self._logger.info(
                 f'Generating POT via script: {self.script_path}')
             command_args = [self.node_path, self.script_path]
@@ -83,8 +74,8 @@ else:
                         'This is likely to cause subsequent errors.')
                 command_args.extend(['-p', proxy])
             # keep compat with previous versions
-            if content_binding is not None:
-                command_args.extend(['-v', content_binding])
+            if self.content_binding is not None:
+                command_args.extend(['-v', self.content_binding])
             self._logger.debug(
                 f'Executing command to get POT via script: {" ".join(command_args)}')
 
@@ -113,13 +104,12 @@ else:
             except json.JSONDecodeError as e:
                 raise RequestError(
                     f'Error parsing JSON response from _get_pot_via_script (caused by {e!r})') from e
+            if 'poToken' not in script_data_resp:
+                raise RequestError('The script did not respond with a po_token')
             else:
-                if 'poToken' not in script_data_resp:
-                    raise RequestError('The script did not respond with a po_token')
-                else:
-                    return self._cache_token(
-                        yt_ie, script_data_resp['poToken'],
-                        content_binding=content_binding)
+                return self._cache_token(
+                    script_data_resp['poToken'],
+                    content_binding=self.content_binding)
 
     @getpot.register_preference(BgUtilScriptGetPOTRH)
     def bgutil_script_getpot_preference(rh, request):

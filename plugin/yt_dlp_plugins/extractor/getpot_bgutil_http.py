@@ -17,7 +17,7 @@ except ImportError:
 else:
     @getpot.register_provider
     class BgUtilHTTPGetPOTRH(BgUtilBaseGetPOTRH):
-        def _validate_get_pot(
+        def _real_validate_get_pot(
             self,
             client: str,
             ydl: YoutubeDL,
@@ -30,8 +30,8 @@ else:
             ytcfg=None,
             **kwargs,
         ):
-            base_url = ydl.get_info_extractor('Youtube')._configuration_arg(
-                'getpot_bgutil_baseurl', ['http://127.0.0.1:4416'], casesense=True)[0]
+            base_url = self._get_config_setting(
+                'baseurl', default='http://127.0.0.1:4416')
             try:
                 response = ydl.urlopen(Request(
                     f'{base_url}/ping', extensions={'timeout': 5.0}, proxies={'all': None}))
@@ -66,14 +66,7 @@ else:
             ytcfg=None,
             **kwargs,
         ) -> str:
-            yt_ie = ydl.get_info_extractor('Youtube')
-            content_binding = self._get_content_binding(
-                client=client, context=context, data_sync_id=data_sync_id,
-                visitor_data=visitor_data, video_id=video_id)
-            if (cached_pot := self._get_cached_token(
-                    yt_ie, context=context,
-                    content_binding=content_binding)) is not None:
-                return cached_pot
+            # BgUtilScript loads cache, don't need to do it again here
             self._logger.info('Generating POT via HTTP server')
             if ((proxy := select_proxy('https://jnn-pa.googleapis.com', self.proxies))
                     != select_proxy('https://youtube.com', self.proxies)):
@@ -86,7 +79,7 @@ else:
                     f'{self.base_url}/get_pot', data=json.dumps({
                         'client': client,
                         # keep compat with previous versions
-                        'visitor_data': content_binding,
+                        'visitor_data': self.content_binding,
                         'proxy': proxy,
                     }).encode(), headers={'Content-Type': 'application/json'},
                     extensions={'timeout': self._GETPOT_TIMEOUT}, proxies={'all': None}))
@@ -105,7 +98,7 @@ else:
             if 'po_token' not in response_json:
                 raise RequestError('Server did not respond with a po_token')
             return self._cache_token(
-                yt_ie, response_json['po_token'], content_binding=content_binding)
+                response_json['po_token'], content_binding=self.content_binding)
 
     @getpot.register_preference(BgUtilHTTPGetPOTRH)
     def bgutil_HTTP_getpot_preference(rh, request):
