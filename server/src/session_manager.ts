@@ -41,6 +41,7 @@ class Logger {
 }
 
 export class SessionManager {
+    // TODO: remove caching on server side
     private youtubeSessionDataCaches: YoutubeSessionDataCaches = {};
     private TOKEN_TTL_HOURS: number;
     private logger: Logger;

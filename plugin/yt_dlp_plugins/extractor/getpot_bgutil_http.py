@@ -32,19 +32,16 @@ else:
         ):
             base_url = ydl.get_info_extractor('Youtube')._configuration_arg(
                 'getpot_bgutil_baseurl', ['http://127.0.0.1:4416'], casesense=True)[0]
-            if not data_sync_id and not visitor_data:
-                self.warn_and_raise(
-                    'One of [data_sync_id, visitor_data] must be passed')
             try:
                 response = ydl.urlopen(Request(
                     f'{base_url}/ping', extensions={'timeout': 5.0}, proxies={'all': None}))
             except Exception as e:
-                self.warn_and_raise(
+                self._warn_and_raise(
                     f'Error reaching GET /ping (caused by {e.__class__.__name__})', raise_from=e)
             try:
                 response = json.load(response)
             except json.JSONDecodeError as e:
-                self.warn_and_raise(
+                self._warn_and_raise(
                     f'Error parsing response JSON (caused by {e!r})'
                     f', response: {response.read()}', raise_from=e)
             if response.get('version') != self.VERSION:
@@ -69,6 +66,14 @@ else:
             ytcfg=None,
             **kwargs,
         ) -> str:
+            yt_ie = ydl.get_info_extractor('Youtube')
+            content_binding = self._get_content_binding(
+                client=client, context=context, data_sync_id=data_sync_id,
+                visitor_data=visitor_data, video_id=video_id)
+            if (cached_pot := self._get_cached_token(
+                    yt_ie, context=context,
+                    content_binding=content_binding)) is not None:
+                return cached_pot
             self._logger.info('Generating POT via HTTP server')
             if ((proxy := select_proxy('https://jnn-pa.googleapis.com', self.proxies))
                     != select_proxy('https://youtube.com', self.proxies)):
@@ -80,8 +85,8 @@ else:
                 response = ydl.urlopen(Request(
                     f'{self.base_url}/get_pot', data=json.dumps({
                         'client': client,
-                        'visitor_data': visitor_data,
-                        'data_sync_id': data_sync_id,
+                        # keep compat with previous versions
+                        'visitor_data': content_binding,
                         'proxy': proxy,
                     }).encode(), headers={'Content-Type': 'application/json'},
                     extensions={'timeout': self._GETPOT_TIMEOUT}, proxies={'all': None}))
@@ -99,8 +104,8 @@ else:
                 raise RequestError(error_msg)
             if 'po_token' not in response_json:
                 raise RequestError('Server did not respond with a po_token')
-
-            return response_json['po_token']
+            return self._cache_token(
+                yt_ie, response_json['po_token'], content_binding=content_binding)
 
     @getpot.register_preference(BgUtilHTTPGetPOTRH)
     def bgutil_HTTP_getpot_preference(rh, request):

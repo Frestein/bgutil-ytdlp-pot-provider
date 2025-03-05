@@ -25,46 +25,73 @@ else:
             return os.path.join(
                 home, 'bgutil-ytdlp-pot-provider', 'server', 'build', 'generate_once.js')
 
-        def _validate_get_pot(self, client: str, ydl: YoutubeDL, visitor_data=None, data_sync_id=None, player_url=None, **kwargs):
+        def _validate_get_pot(
+            self,
+            client: str,
+            ydl: YoutubeDL,
+            visitor_data=None,
+            data_sync_id=None,
+            session_index=None,
+            player_url=None,
+            context=None,
+            video_id=None,
+            ytcfg=None,
+            **kwargs,
+        ):
             script_path = ydl.get_info_extractor('Youtube')._configuration_arg(
                 'getpot_bgutil_script', [self._default_script_path], casesense=True)[0]
-            if not data_sync_id and not visitor_data:
-                self.warn_and_raise(
-                    'One of [data_sync_id, visitor_data] must be passed')
             if not os.path.isfile(script_path):
-                self.warn_and_raise(
+                self._warn_and_raise(
                     f"Script path doesn't exist: {script_path}")
             if os.path.basename(script_path) != 'generate_once.js':
-                self.warn_and_raise(
+                self._warn_and_raise(
                     'Incorrect script passed to extractor args. Path to generate_once.js required')
-            if shutil.which('node') is None:
-                self.warn_and_raise('node is not in PATH')
+            if (node_path := shutil.which('node')) is None:
+                self._warn_and_raise('node is not in PATH')
             self.script_path = script_path
+            self.node_path = node_path
 
-        def _get_pot(self, client: str, ydl: YoutubeDL, visitor_data=None, data_sync_id=None, player_url=None, **kwargs) -> str:
+        def _get_pot(
+            self,
+            client: str,
+            ydl: YoutubeDL,
+            visitor_data=None,
+            data_sync_id=None,
+            session_index=None,
+            player_url=None,
+            context=None,
+            video_id=None,
+            ytcfg=None,
+            **kwargs,
+        ) -> str:
+            yt_ie = ydl.get_info_extractor('Youtube')
+            content_binding = self._get_content_binding(
+                client=client, context=context, data_sync_id=data_sync_id,
+                visitor_data=visitor_data, video_id=video_id)
+            if (cached_pot := self._get_cached_token(
+                    yt_ie, context=context,
+                    content_binding=content_binding)) is not None:
+                return cached_pot
+
             self._logger.info(
                 f'Generating POT via script: {self.script_path}')
-            command_args = ['node', self.script_path]
+            command_args = [self.node_path, self.script_path]
             if proxy := select_proxy('https://jnn-pa.googleapis.com', self.proxies):
                 if proxy != select_proxy('https://youtube.com', self.proxies):
                     self._logger.warning(
                         'Proxies for https://youtube.com and https://jnn-pa.googleapis.com are different. '
                         'This is likely to cause subsequent errors.')
                 command_args.extend(['-p', proxy])
-            if data_sync_id:
-                command_args.extend(['-d', data_sync_id])
-            elif visitor_data:
-                command_args.extend(['-v', visitor_data])
-            else:
-                raise RequestError(
-                    'Unexpected missing visitorData and dataSyncId in _get_pot_via_script')
+            # keep compat with previous versions
+            if content_binding is not None:
+                command_args.extend(['-v', content_binding])
             self._logger.debug(
                 f'Executing command to get POT via script: {" ".join(command_args)}')
 
             try:
                 stdout, stderr, returncode = Popen.run(
                     command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                    timeout=self._GETPOT_TIMEOUT)
+                    env=self._GETPOT_ENV, timeout=self._GETPOT_TIMEOUT)
             except subprocess.TimeoutExpired as e:
                 raise RequestError(
                     f'_get_pot_via_script failed: Timeout expired when trying to run script (caused by {e!r})')
@@ -87,12 +114,12 @@ else:
                 raise RequestError(
                     f'Error parsing JSON response from _get_pot_via_script (caused by {e!r})') from e
             else:
-                self._logger.debug(
-                    f'_get_pot_via_script response = {script_data_resp}')
-            if potoken := script_data_resp.get('poToken'):
-                return potoken
-            else:
-                raise RequestError('The script did not respond with a po_token')
+                if 'poToken' not in script_data_resp:
+                    raise RequestError('The script did not respond with a po_token')
+                else:
+                    return self._cache_token(
+                        yt_ie, script_data_resp['poToken'],
+                        content_binding=content_binding)
 
     @getpot.register_preference(BgUtilScriptGetPOTRH)
     def bgutil_script_getpot_preference(rh, request):
