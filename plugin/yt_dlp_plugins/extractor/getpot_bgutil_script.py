@@ -118,7 +118,7 @@ else:
             else:
                 return self._cache_token(
                     script_data_resp['poToken'],
-                    content_binding=self.content_binding)
+                    content_binding=self.content_binding, context=context)
 
     @getpot.register_preference(BgUtilScriptGetPOTRH)
     def bgutil_script_getpot_preference(rh, request):

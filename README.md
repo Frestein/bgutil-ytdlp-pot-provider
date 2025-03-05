@@ -63,7 +63,7 @@ node build/main.js
 **Endpoints**
 
 - **POST /get_pot**: Generate a new POT.
-  - The request should be a JSON including:
+  - The request data should be a JSON including:
     - `visitor_data`: Content binding (optional, a new unauthenticated visitor data will be generated if not passed).
     - `proxy`: A string indicating the proxy to use for the requests (optional).
   - Returns a JSON:

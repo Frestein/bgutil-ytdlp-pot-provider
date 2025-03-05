@@ -74,16 +74,26 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
         return {k: v for k, v in cached_tokens.items() if v['expires_at'] > time.time()}
 
     def get_cache_ttl(self, context):
-        from yt_dlp_plugins.extractor.getpot_bgutil_cache import GETPOT_BGUTIL_UNIVERSAL_CONFIG_NAME
+        from yt_dlp_plugins.extractor.getpot_bgutil_cache import CACHE_CONFIG_NAME
         # TODO: test and add to README
-        return (
-            self._get_config_setting('ttl')
-            or self._get_config_setting(
-                'ttl', ie_key=GETPOT_BGUTIL_UNIVERSAL_CONFIG_NAME)
-            or self._DEFAULT_CACHE_TTL_SECONDS.get(context, 0))
+        context_ttl = f'{context}_ttl'
+        universal_ttl = 'ttl'
+
+        def first_valid(*args):
+            return next((arg for arg in args if arg is not None), None)
+        res = int(first_valid(
+            self._get_config_setting(context_ttl),
+            self._get_config_setting(context_ttl, ie_key=CACHE_CONFIG_NAME),
+            self._get_config_setting(universal_ttl),
+            self._get_config_setting(universal_ttl, ie_key=CACHE_CONFIG_NAME),
+            self._DEFAULT_CACHE_TTL_SECONDS.get(context),
+            0))
+        self._logger.warning(
+            f'{self._CONFIG_NAME}\'s {context} token cache TTL is {res} seconds', once=True)
+        return res
 
     def _cache_token(self, po_token, expires_at=None, *,
-                     content_binding, context='gvs'):
+                     content_binding, context):
         cached_tokens = self._get_active_cache(self.yt_ie)
         cached_tokens[content_binding] = {
             'po_token': po_token,
