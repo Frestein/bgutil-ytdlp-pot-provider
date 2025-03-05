@@ -6,7 +6,6 @@ import typing
 if typing.TYPE_CHECKING:
     from yt_dlp import YoutubeDL
 
-from yt_dlp.networking._helper import select_proxy
 from yt_dlp.networking.common import Request
 from yt_dlp.networking.exceptions import RequestError
 
@@ -62,11 +61,7 @@ else:
         ) -> str:
             # BgUtilScript loads cache, don't need to do it again here
             self._logger.info('Generating POT via HTTP server')
-            if ((proxy := select_proxy('https://jnn-pa.googleapis.com', self.proxies))
-                    != select_proxy('https://youtube.com', self.proxies)):
-                self._logger.warning(
-                    'Proxies for https://youtube.com and https://jnn-pa.googleapis.com are different. '
-                    'This is likely to cause subsequent errors.')
+            proxy = self._get_yt_proxy()
 
             try:
                 response = ydl.urlopen(Request(

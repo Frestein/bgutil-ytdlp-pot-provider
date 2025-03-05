@@ -109,7 +109,7 @@ If you want to change the port number used by the provider server, use the `--po
 node build/main.js --port 8080
 ```
 
-If changing the port or IP used for the provider server, pass it to yt-dlp via `baseutl`
+If changing the port or IP used for the provider server, pass it to yt-dlp via `baseurl`
 
 ```shell
 --extractor-args "youtube-bgutilhttp:baseurl=http://127.0.0.1:8080"

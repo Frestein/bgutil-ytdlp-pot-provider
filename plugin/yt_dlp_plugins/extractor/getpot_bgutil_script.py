@@ -8,7 +8,6 @@ import typing
 
 if typing.TYPE_CHECKING:
     from yt_dlp import YoutubeDL
-from yt_dlp.networking._helper import select_proxy
 from yt_dlp.networking.exceptions import RequestError
 from yt_dlp.utils import Popen, classproperty
 
@@ -81,11 +80,7 @@ else:
             self._logger.info(
                 f'Generating POT via script: {self.script_path}')
             command_args = [self.node_path, self.script_path]
-            if proxy := select_proxy('https://jnn-pa.googleapis.com', self.proxies):
-                if proxy != select_proxy('https://youtube.com', self.proxies):
-                    self._logger.warning(
-                        'Proxies for https://youtube.com and https://jnn-pa.googleapis.com are different. '
-                        'This is likely to cause subsequent errors.')
+            if proxy := self._get_yt_proxy():
                 command_args.extend(['-p', proxy])
             # keep compat with previous versions
             if self.content_binding is not None:

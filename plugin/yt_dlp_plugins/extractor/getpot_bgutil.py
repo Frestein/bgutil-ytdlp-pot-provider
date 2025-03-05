@@ -8,6 +8,7 @@ import typing
 
 if typing.TYPE_CHECKING:
     from yt_dlp import YoutubeDL
+from yt_dlp.networking._helper import select_proxy
 from yt_dlp.networking.common import Features
 from yt_dlp.networking.exceptions import UnsupportedRequest
 from yt_dlp.utils import classproperty, remove_end
@@ -32,6 +33,7 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
     _GETPOT_ENV = {
         **os.environ,
         'TOKEN_TTL': '0',
+        # pass TOKEN_TTL=0 for compatibility, TOKEN_TTL is removed in this version
     }
     _CACHE_STORE = 'youtube-getpot-bgutil'
     _CACHE_STORE_KEY = 'po_token'
@@ -106,6 +108,14 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
                 f'(plugin: {self.VERSION}, {name}: {got_version or 'unknown'})',
                 once=True)
 
+    def _get_yt_proxy(self):
+        if ((proxy := select_proxy('https://jnn-pa.googleapis.com', self.proxies))
+                != select_proxy('https://youtube.com', self.proxies)):
+            self._logger.warning(
+                'Proxies for https://youtube.com and https://jnn-pa.googleapis.com are different. '
+                'This is likely to cause subsequent errors.')
+        return proxy
+
     def _validate_get_pot(
         self,
         client: str,
@@ -145,52 +155,4 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
         return cls._PROVIDER_NAME or remove_end(cls.RH_KEY, 'GetPOT')
 
 
-@getpot.register_provider
-class BgUtilCacheGetPOTRH(BgUtilBaseGetPOTRH):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.cached_pot = None
-
-    def _real_validate_get_pot(
-        self,
-        client: str,
-        ydl: YoutubeDL,
-        visitor_data=None,
-        data_sync_id=None,
-        session_index=None,
-        player_url=None,
-        context=None,
-        video_id=None,
-        ytcfg=None,
-        **kwargs,
-    ):
-        if (cached_pot := self._get_cached_token(
-                context=context,
-                content_binding=self.content_binding)) is not None:
-            self.cached_pot = cached_pot
-        else:
-            self.cached_pot = None
-            raise UnsupportedRequest('No cache available')
-
-    def _get_pot(
-        self,
-        client: str,
-        ydl: YoutubeDL,
-        visitor_data=None,
-        data_sync_id=None,
-        session_index=None,
-        player_url=None,
-        context=None,
-        video_id=None,
-        ytcfg=None,
-        **kwargs,
-    ) -> str:
-        return self.cached_pot
-
-
-@getpot.register_preference(BgUtilCacheGetPOTRH)
-def bgutil_cache_getpot_preference(rh, request):
-    return 200
-
-
-__all__ = [BgUtilCacheGetPOTRH, getpot.__name__, '__version__']
+__all__ = [getpot.__name__, '__version__']
