@@ -13,38 +13,28 @@ program.parse();
 const options = program.opts();
 
 (async () => {
-    if (options.version || false) {
+    if (options.version) {
         console.log(VERSION);
         process.exit(0);
     }
-    const visitorData = options.visitorData;
-    const dataSyncId = options.dataSyncId;
+    let contentBinding = options.dataSyncId || options.visitorData;
+    if (options.dataSyncId)
+        console.error('-d is deprecated, use -v instead');
     const proxy = options.proxy || "";
     const verbose = options.verbose || false;
-    let visitIdentifier: string;
 
     const sessionManager = new SessionManager(verbose);
     function log(msg: string) {
         if (verbose) console.log(msg);
     }
 
-    if (dataSyncId) {
-        log(`Received request for data sync ID: '${dataSyncId}'`);
-        visitIdentifier = dataSyncId;
-    } else if (visitorData) {
-        log(`Received request for visitor data: '${visitorData}'`);
-        visitIdentifier = visitorData;
-    } else {
-        log(`Received request for visitor data, grabbing from Innertube`);
-        const generatedVisitorData = await sessionManager.generateVisitorData();
-        if (!generatedVisitorData) process.exit(1);
-        log(`Generated visitor data: ${generatedVisitorData}`);
-        visitIdentifier = generatedVisitorData;
-    }
+    if (!contentBinding)
+        contentBinding = await sessionManager.generateVisitorData() || process.exit(1);
+    log(`Received request for visitor data: '${contentBinding}'`);
 
     try {
         const sessionData = await sessionManager.generatePoToken(
-            visitIdentifier,
+            contentBinding,
             proxy,
         );
         console.log(JSON.stringify(sessionData));

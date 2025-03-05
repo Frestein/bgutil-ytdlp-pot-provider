@@ -9,7 +9,6 @@ import { SocksProxyAgent } from "socks-proxy-agent";
 interface YoutubeSessionData {
     poToken: string;
     visitIdentifier: string;
-    generatedAt: Date;
 }
 
 class Logger {
@@ -28,11 +27,12 @@ class Logger {
     }
 
     warn(msg: string) {
-        if (this.shouldLog) console.warn(msg);
+        // stderr should be always showed
+        console.warn(msg);
     }
 
     error(msg: string) {
-        if (this.shouldLog) console.error(msg);
+        console.error(msg);
     }
 }
 
@@ -45,13 +45,14 @@ export class SessionManager {
     }
 
     async generateVisitorData(): Promise<string | null> {
+        this.logger.log(`Received request for visitor data, grabbing from Innertube`);
         const innertube = await Innertube.create({ retrieve_player: false });
         const visitorData = innertube.session.context.client.visitorData;
         if (!visitorData) {
             this.logger.error("Unable to generate visitor data via Innertube");
             return null;
         }
-
+        this.logger.log(`Generated visitor data: ${visitorData}`);
         return visitorData;
     }
 
@@ -98,10 +99,10 @@ export class SessionManager {
     }
     // mostly copied from https://github.com/LuanRT/BgUtils/tree/main/examples/node
     async generatePoToken(
-        visitIdentifier: string,
+        contentBinding: string,
         proxy: string = "",
     ): Promise<YoutubeSessionData> {
-        this.logger.log(`Generating POT for ${visitIdentifier}`);
+        this.logger.log(`Generating POT for ${contentBinding}`);
 
         // hardcoded API key that has been used by youtube for years
         const requestKey = "O43z0dpjhgX20SCx4KAo";
@@ -154,7 +155,7 @@ export class SessionManager {
                 }
             },
             globalObj: globalThis,
-            identifier: visitIdentifier,
+            identifier: contentBinding,
             requestKey,
         };
 
@@ -193,17 +194,14 @@ export class SessionManager {
             );
         }
 
-        this.logger.log(`po_token: ${poToken}`);
-        this.logger.log(`visit_identifier: ${visitIdentifier}`);
-
         if (!poToken) {
-            throw new Error("po_token unexpected undefined");
+            throw new Error("poToken unexpected undefined");
         }
 
+        this.logger.log(`poToken: ${poToken}`);
         return {
-            visitIdentifier: visitIdentifier,
+            visitIdentifier: contentBinding,
             poToken: poToken,
-            generatedAt: new Date(),
         };
     }
 }

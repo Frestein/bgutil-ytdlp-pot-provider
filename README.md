@@ -54,14 +54,24 @@ node build/main.js
 ```
 
 <details>
-  <summary>Server Endpoints</summary>
+  <summary>Server command line options/endpoints</summary>
+
+**Options**
+- `-p, --port <PORT>`: The port on which the server listens.
+- `--verbose`: Use verbose logging
 
 **Endpoints**
 
-- **POST /get_pot**: Accepts a `visitor_data` (unauthenticated), `data_sync_id` (authenticated) or an empty object in the request JSON. If no identifier is passed, a new unauthenticated `visitor_data` will be generated. Returns `po_token` and the associated identifier `visit_identifier`.
+- **POST /get_pot**: Generate a new POT.
+  - The request should be a JSON including:
+    - `visitor_data`: Content binding (optional, a new unauthenticated visitor data will be generated if not passed).
+    - `proxy`: A string indicating the proxy to use for the requests (optional).
+  - Returns a JSON:
+    - `po_token`: The POT.
+    - `visit_identifier`: The passed or generated content binding.
 - **GET /ping**: Ping the server. The response includes:
-  - `logging`: Logging verbosity(`normal` or `verbose`)
-  - `server_uptime`: Uptime of the server process.
+  - `logging`: Logging verbosity(`normal` or `verbose`).
+  - `server_uptime`: Uptime of the server process in seconds.
   - `version`: Current server version.
 
 </details>
@@ -83,6 +93,16 @@ npx tsc
 ```
 
 2. Make sure `node` is available in your `PATH`.
+
+<details>
+  <summary>Script options</summary>
+
+- `-v, --visitor-data <visitordata>`: The content binding, optional. If no content binding is passed, a new unauthenticated visitor data will be generated.
+- `-p, --proxy <proxy-all>`: The proxy to use for the requests, optional.
+- `--version`: Print the script version and exit
+- `--verbose`: Use verbose logging
+
+</details>
 
 ### 2. Install the plugin
 
