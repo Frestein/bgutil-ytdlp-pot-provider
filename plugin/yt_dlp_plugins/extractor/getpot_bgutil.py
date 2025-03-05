@@ -64,7 +64,7 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
         return video_id
 
     @classmethod
-    def _clear_expired_cache(cls, ie) -> dict:
+    def _get_active_cache(cls, ie) -> dict:
         cached_tokens = cls._get_cached_tokens(ie)
         return {k: v for k, v in cached_tokens.items() if v['expires_at'] > time.time()}
 
@@ -74,7 +74,7 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
 
     def _cache_token(self, po_token, expires_at=None, *,
                      content_binding, context='gvs'):
-        cached_tokens = self._clear_expired_cache(self.yt_ie)
+        cached_tokens = self._get_active_cache(self.yt_ie)
         cached_tokens[content_binding] = {
             'po_token': po_token,
             'expires_at': time.time() + self.get_cache_ttl(context=context) if expires_at is None else expires_at,
