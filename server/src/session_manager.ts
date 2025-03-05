@@ -37,7 +37,6 @@ class Logger {
 }
 
 export class SessionManager {
-    // TODO: remove caching on server side
     private logger: Logger;
 
     constructor(shouldLog = true) {

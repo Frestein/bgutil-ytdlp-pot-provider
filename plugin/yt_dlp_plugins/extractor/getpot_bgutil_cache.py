@@ -57,4 +57,6 @@ else:
     def bgutil_cache_getpot_preference(rh, request):
         return 200
 
-    __all__ = [BgUtilCacheGetPOTRH.__class__.__name__, bgutil_cache_getpot_preference.__name__]
+    GETPOT_BGUTIL_UNIVERSAL_CONFIG_NAME = BgUtilCacheGetPOTRH._CONFIG_NAME
+
+    __all__ = [BgUtilCacheGetPOTRH.__class__.__name__, bgutil_cache_getpot_preference.__name__, GETPOT_BGUTIL_UNIVERSAL_CONFIG_NAME.__name__]

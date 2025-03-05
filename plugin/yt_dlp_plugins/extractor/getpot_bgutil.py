@@ -47,8 +47,14 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
         self.yt_ie = None
         self.content_binding = None
 
-    def _get_config_setting(self, key, casesense=True, default=None):
-        return self.yt_ie._configuration_arg(key, [default], ie_key=f'youtube-{self.RH_NAME.lower()}', casesense=casesense)[0]
+    @classproperty
+    def _CONFIG_NAME(cls):
+        return cls.RH_NAME.lower()
+
+    def _get_config_setting(self, key, casesense=True, default=None, ie_key=None):
+        return self.yt_ie._configuration_arg(
+            key, [default], ie_key=f'youtube-{self._CONFIG_NAME}' if ie_key is None else ie_key,
+            casesense=casesense)[0]
 
     def _warn_and_raise(self, msg, once=True, raise_from=None):
         self._logger.warning(msg, once=once)
@@ -60,7 +66,6 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
         if context == 'gvs' or client == 'web_music':
             # web_music player or gvs is bound to data_sync_id or visitor_data
             return data_sync_id or visitor_data
-
         return video_id
 
     @classmethod
@@ -68,9 +73,14 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
         cached_tokens = cls._get_cached_tokens(ie)
         return {k: v for k, v in cached_tokens.items() if v['expires_at'] > time.time()}
 
-    @classmethod
-    def get_cache_ttl(cls, context):
-        return cls._DEFAULT_CACHE_TTL_SECONDS.get(context, 0)
+    def get_cache_ttl(self, context):
+        from yt_dlp_plugins.extractor.getpot_bgutil_cache import GETPOT_BGUTIL_UNIVERSAL_CONFIG_NAME
+        # TODO: test and add to README
+        return (
+            self._get_config_setting('ttl')
+            or self._get_config_setting(
+                'ttl', ie_key=GETPOT_BGUTIL_UNIVERSAL_CONFIG_NAME)
+            or self._DEFAULT_CACHE_TTL_SECONDS.get(context, 0))
 
     def _cache_token(self, po_token, expires_at=None, *,
                      content_binding, context='gvs'):
