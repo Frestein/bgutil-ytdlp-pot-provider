@@ -24,9 +24,9 @@ else:
             return os.path.join(
                 home, 'bgutil-ytdlp-pot-provider', 'server', 'build', 'generate_once.js')
 
-        def _check_script_version(self):
+        def _check_script_version(self, node_path, script_path):
             stdout, stderr, returncode = Popen.run(
-                [self.node_path, self.script_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                [node_path, script_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                 env=self._GETPOT_ENV, timeout=self._GET_VSN_TIMEOUT)
             if returncode:
                 self._logger.warning(
@@ -60,9 +60,9 @@ else:
                     'Incorrect script passed to extractor args. Path to generate_once.js required')
             if (node_path := shutil.which('node')) is None:
                 self._warn_and_raise('node is not in PATH')
+            self._check_script_version(node_path, script_path)
             self.script_path = script_path
             self.node_path = node_path
-            self._check_script_version()
 
         def _get_pot(
             self,
