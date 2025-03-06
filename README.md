@@ -145,8 +145,22 @@ If you installed the script in a different location, pass it as the extractor ar
 --extractor-args "youtube-bgutilscript:script=$WORKSPACE/bgutil-ytdlp-pot-provider/server/build/generate_once.js"
 ```
 
-# TODO
-youtube-bgutilcache and ttl
+We use a cache internally for all generated tokens. You can change the TTL (time to live) for the token cache with an extractor argument called `{context}_ttl`, where `{context}` denotes the token context (can be `gvs` or `player`). The TTL extractor arguments are in seconds.  
+The default cache TTL is 6 hours for gvs and 10 minites for player.  
+For example if you want to change the gvs token TTL to 1 day when using the script method, you can pass the following to yt-dlp:  
+```shell
+--extractor-args "youtube-bgutilscript:gvs_ttl=86400"
+```
+
+If you want to disable caching, pass 0 to all TTLs like this:
+```shell
+--extractor-args "youtube-bgutilscript:gvs-ttl=0;player-ttl=0" \
+--extractor-args "youtube-bgutilhttp:gvs_ttl=0;player_ttl=0"
+```
+This only prevents **new cache from being writtent to the disk**. The old cache can still be read. Currently, there isn't an option to tell the plugin to ignore the old cache.
+
+Note that if you want to pass multiple arguments to a GetPOT provider, use a `;` seperated list.  
+For example, you can use `--extractor-args "youtube-bgutilscript:gvs-ttl=0;script=/path/to/bgutil-ytdlp-pot-provider/server/build/generate_once.js"` if you want to disable caching for gvs tokens and have a custom script path.
 
 ---
 
