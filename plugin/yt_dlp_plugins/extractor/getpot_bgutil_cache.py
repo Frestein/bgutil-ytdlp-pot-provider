@@ -36,7 +36,7 @@ else:
                 self.cached_pot = cached_pot
             else:
                 self.cached_pot = None
-                raise UnsupportedRequest('Cache unavailable')
+                raise UnsupportedRequest('Cache miss')
 
         def _get_pot(
             self,
