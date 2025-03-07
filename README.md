@@ -157,7 +157,7 @@ If you want to disable caching, pass 0 to all TTLs like this:
 --extractor-args "youtube-bgutilscript:gvs-ttl=0;player-ttl=0" \
 --extractor-args "youtube-bgutilhttp:gvs_ttl=0;player_ttl=0"
 ```
-This only prevents **new cache from being writtent to the disk**. The old cache can still be read. Currently, there isn't an option to tell the plugin to ignore the old cache.
+This only prevents **new cache from being written to the disk**. The old cache can still be read. Currently, there isn't an option to tell the plugin to ignore the old cache.
 
 Note that if you want to pass multiple arguments to a GetPOT provider, use a `;` seperated list.  
 For example, you can use `--extractor-args "youtube-bgutilscript:gvs-ttl=0;script=/path/to/bgutil-ytdlp-pot-provider/server/build/generate_once.js"` if you want to disable caching for gvs tokens and have a custom script path.
