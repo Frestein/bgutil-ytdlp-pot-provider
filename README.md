@@ -54,7 +54,7 @@ node build/main.js
 ```
 
 <details>
-  <summary>Server command line options/endpoints</summary>
+  <summary>Server Command Line Options/Endpoints</summary>
 
 **Options**
 - `-p, --port <PORT>`: The port on which the server listens.
