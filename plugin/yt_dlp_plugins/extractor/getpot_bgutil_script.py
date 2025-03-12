@@ -22,8 +22,21 @@ else:
     class BgUtilScriptGetPOTRH(BgUtilBaseGetPOTRH):
         @classproperty(cache=True)
         def _default_script_path(self):
-            home = os.path.expanduser('~')
-            return os.path.join(home, 'bgutil-ytdlp-pot-provider', 'server', 'build', 'generate_once.js')
+            for base_path in [
+                os.environ.get('XDG_CONFIG_HOME', ''),
+                os.path.expanduser('~/.config'),
+                os.path.expanduser('~'),
+            ]:
+                script_path = os.path.join(
+                    base_path,
+                    'bgutil-ytdlp-pot-provider',
+                    'server',
+                    'build',
+                    'generate_once.js',
+                )
+                if os.path.exists(script_path):
+                    return script_path
+            return script_path
 
         def _validate_get_pot(
             self,
