@@ -3,7 +3,7 @@ server/node_modules/
 server/tsconfig.tsbuildinfo
 
 plugin/dist/
-plugin/__pycache__/
+plugin/**/__pycache__/
 plugin/README.md
 plugin/CHANGELOG.md
 plugin/**.pyc

@@ -17,6 +17,7 @@ try:
 except ImportError:
     pass
 else:
+
     @getpot.register_provider
     class BgUtilScriptGetPOTRH(BgUtilBaseGetPOTRH):
         def __init__(self, *args, **kwargs):
@@ -32,36 +33,56 @@ else:
             return node_path
 
         @classproperty(cache=True)
-        def _default_script_path(cls):
-            home = os.path.expanduser('~')
-            return os.path.join(
-                home, 'bgutil-ytdlp-pot-provider', 'server', 'build', 'generate_once.js')
+        def _default_script_path(self):
+            for base_path in [
+                os.environ.get('XDG_CONFIG_HOME', ''),
+                os.path.expanduser('~/.config'),
+                os.path.expanduser('~'),
+            ]:
+                script_path = os.path.join(
+                    base_path,
+                    'bgutil-ytdlp-pot-provider',
+                    'server',
+                    'build',
+                    'generate_once.js',
+                )
+                if os.path.exists(script_path):
+                    return script_path
+            return script_path
 
         def _check_script_impl(self, script_path):
             if not os.path.isfile(script_path):
-                self._warn_and_raise(
-                    f"Script path doesn't exist: {script_path}")
+                self._warn_and_raise(f"Script path doesn't exist: {script_path}")
             if os.path.basename(script_path) != 'generate_once.js':
-                self._warn_and_raise(
-                    'Incorrect script passed to extractor args. Path to generate_once.js required')
+                self._warn_and_raise('Incorrect script passed to extractor args. Path to generate_once.js required')
             stdout, stderr, returncode = Popen.run(
-                [self._node_path, script_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                timeout=self._GET_VSN_TIMEOUT)
+                [self._node_path, script_path, '--version'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=self._GET_VSN_TIMEOUT,
+            )
             if returncode:
                 self._logger.warning(
                     f'Failed to check script version. '
                     f'Script returned {returncode} exit status. '
                     f'Script stdout: {stdout}; Script stderr: {stderr}',
-                    once=True)
+                    once=True,
+                )
             else:
                 self._check_version(stdout.strip(), name='script')
 
         def _check_node_version(self, node_path):
             import re
+
             try:
                 stdout, stderr, returncode = Popen.run(
-                    [node_path, '--version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                    timeout=self._GET_VSN_TIMEOUT)
+                    [node_path, '--version'],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=self._GET_VSN_TIMEOUT,
+                )
                 stdout = stdout.strip()
                 mobj = re.match(r'v(\d+)\.(\d+)\.(\d+)', stdout)
                 if returncode or not mobj:
@@ -73,15 +94,16 @@ else:
             except RuntimeError as e:
                 min_vsn_str = 'v' + '.'.join(str(v) for v in self._MIN_NODE_VSN)
                 self._warn_and_raise(
-                    f'Node version too low. '
-                    f'(got {stdout}, but at least {min_vsn_str} is required)',
-                    raise_from=e)
+                    f'Node version too low. (got {stdout}, but at least {min_vsn_str} is required)',
+                    raise_from=e,
+                )
             except (subprocess.TimeoutExpired, ValueError) as e:
                 self._warn_and_raise(
                     f'Failed to check node version. '
                     f'Node returned {returncode} exit status. '
                     f'Node stdout: {stdout}; Node stderr: {stderr}',
-                    raise_from=e)
+                    raise_from=e,
+                )
 
         def _real_validate_get_pot(
             self,
@@ -97,8 +119,7 @@ else:
             **kwargs,
         ):
             # validate script
-            script_path = self._get_config_setting(
-                'getpot_bgutil_script', default=self._default_script_path)
+            script_path = self._get_config_setting('getpot_bgutil_script', default=self._default_script_path)
             self._check_script(script_path)
             self.script_path = script_path
 
@@ -115,50 +136,48 @@ else:
             ytcfg=None,
             **kwargs,
         ) -> str:
-            self._logger.info(
-                f'Generating POT via script: {self.script_path}')
+            self._logger.info(f'Generating POT via script: {self.script_path}')
             command_args = [self._node_path, self.script_path]
             if proxy := self._get_yt_proxy():
                 command_args.extend(['-p', proxy])
             # keep compat with previous versions
             if self.content_binding is not None:
                 command_args.extend(['-v', self.content_binding])
-            self._logger.debug(
-                f'Executing command to get POT via script: {" ".join(command_args)}')
+            self._logger.debug(f'Executing command to get POT via script: {" ".join(command_args)}')
 
             try:
                 stdout, stderr, returncode = Popen.run(
-                    command_args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                    timeout=self._GETPOT_TIMEOUT)
+                    command_args,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    text=True,
+                    timeout=self._GETPOT_TIMEOUT,
+                )
             except subprocess.TimeoutExpired as e:
                 raise RequestError(
-                    f'_get_pot_via_script failed: Timeout expired when trying to run script (caused by {e!r})')
+                    f'_get_pot_via_script failed: Timeout expired when trying to run script (caused by {e!r})',
+                )
             except Exception as e:
-                raise RequestError(
-                    f'_get_pot_via_script failed: Unable to run script (caused by {e!r})') from e
+                raise RequestError(f'_get_pot_via_script failed: Unable to run script (caused by {e!r})') from e
 
             msg = f'stdout:\n{stdout.strip()}'
             if stderr.strip():  # Empty strings are falsy
                 msg += f'\nstderr:\n{stderr.strip()}'
             self._logger.debug(msg)
             if returncode:
-                raise RequestError(
-                    f'_get_pot_via_script failed with returncode {returncode}')
+                raise RequestError(f'_get_pot_via_script failed with returncode {returncode}')
 
             try:
                 # The JSON response is always the last line
                 script_data_resp = json.loads(stdout.splitlines()[-1])
             except json.JSONDecodeError as e:
-                raise RequestError(
-                    f'Error parsing JSON response from _get_pot_via_script (caused by {e!r})') from e
+                raise RequestError(f'Error parsing JSON response from _get_pot_via_script (caused by {e!r})') from e
             if 'poToken' not in script_data_resp:
-                raise RequestError(
-                    'The script did not respond with a po_token')
+                raise RequestError('The script did not respond with a po_token')
             return script_data_resp['poToken']
 
     @getpot.register_preference(BgUtilScriptGetPOTRH)
     def bgutil_script_getpot_preference(rh, request):
         return 100
 
-    __all__ = [BgUtilScriptGetPOTRH.__class__.__name__,
-               bgutil_script_getpot_preference.__name__]
+    __all__ = [BgUtilScriptGetPOTRH.__class__.__name__, bgutil_script_getpot_preference.__name__]

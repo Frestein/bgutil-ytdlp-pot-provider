@@ -15,16 +15,32 @@ from yt_dlp.utils import classproperty, remove_end
 try:
     import yt_dlp_plugins.extractor.getpot as getpot
 except ImportError as e:
-    e.msg += '\nyt-dlp-get-pot is missing! See https://github.com/coletdjnz/yt-dlp-get-pot?tab=readme-ov-file#installing.'
+    e.msg += (
+        '\nyt-dlp-get-pot is missing! See https://github.com/coletdjnz/yt-dlp-get-pot?tab=readme-ov-file#installing.'
+    )
     raise e
 
 
 class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
-    _SUPPORTED_CLIENTS = ('web', 'web_safari', 'web_embedded',
-                          'web_music', 'web_creator', 'mweb', 'tv_embedded', 'tv')
+    _SUPPORTED_CLIENTS = (
+        'web',
+        'web_safari',
+        'web_embedded',
+        'web_music',
+        'web_creator',
+        'mweb',
+        'tv_embedded',
+        'tv',
+    )
     VERSION = __version__
     _SUPPORTED_PROXY_SCHEMES = (
-        'http', 'https', 'socks4', 'socks4a', 'socks5', 'socks5h')
+        'http',
+        'https',
+        'socks4',
+        'socks4a',
+        'socks5',
+        'socks5h',
+    )
     _SUPPORTED_FEATURES = (Features.NO_PROXY, Features.ALL_PROXY)
     _SUPPORTED_CONTEXTS = ('gvs', 'player')
     _GETPOT_TIMEOUT = 20.0
@@ -41,8 +57,7 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
         return cls.RH_NAME.lower()
 
     def _get_config_setting(self, key, casesense=True, default=None):
-        return self.yt_ie._configuration_arg(
-            key, [default], casesense=casesense)[0]
+        return self.yt_ie._configuration_arg(key, [default], casesense=casesense)[0]
 
     def _warn_and_raise(self, msg, once=True, raise_from=None):
         self._logger.warning(msg, once=once)
@@ -63,14 +78,18 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
                 f'this may cause compatibility issues. '
                 f'Please ensure they are on the same version. '
                 f'(plugin: {self.VERSION}, {name}: {got_version or default})',
-                once=True)
+                once=True,
+            )
 
     def _get_yt_proxy(self):
-        if ((proxy := select_proxy('https://jnn-pa.googleapis.com', self.proxies))
-                != select_proxy('https://youtube.com', self.proxies)):
+        if (proxy := select_proxy('https://jnn-pa.googleapis.com', self.proxies)) != select_proxy(
+            'https://youtube.com',
+            self.proxies,
+        ):
             self._logger.warning(
                 'Proxies for https://youtube.com and https://jnn-pa.googleapis.com are different. '
-                'This is likely to cause subsequent errors.')
+                'This is likely to cause subsequent errors.',
+            )
         return proxy
 
     def _validate_get_pot(
@@ -86,12 +105,21 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
         # sets yt_ie, content_binding
         self.yt_ie = ydl.get_info_extractor('Youtube')
         self.content_binding = self._get_content_binding(
-            client=client, context=context, data_sync_id=data_sync_id,
-            visitor_data=visitor_data, video_id=video_id)
+            client=client,
+            context=context,
+            data_sync_id=data_sync_id,
+            visitor_data=visitor_data,
+            video_id=video_id,
+        )
         self._real_validate_get_pot(
-            client=client, ydl=ydl, visitor_data=visitor_data,
-            data_sync_id=data_sync_id, context=context, video_id=video_id,
-            **kwargs)
+            client=client,
+            ydl=ydl,
+            visitor_data=visitor_data,
+            data_sync_id=data_sync_id,
+            context=context,
+            video_id=video_id,
+            **kwargs,
+        )
 
     def _real_validate_get_pot(
         self,

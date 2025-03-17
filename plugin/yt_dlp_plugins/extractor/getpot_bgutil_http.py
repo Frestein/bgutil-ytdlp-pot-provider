@@ -14,6 +14,7 @@ try:
 except ImportError:
     pass
 else:
+
     @getpot.register_provider
     class BgUtilHTTPGetPOTRH(BgUtilBaseGetPOTRH):
         def _real_validate_get_pot(
@@ -29,15 +30,20 @@ else:
             ytcfg=None,
             **kwargs,
         ):
-            base_url = self._get_config_setting(
-                'getpot_bgutil_baseurl', default='http://127.0.0.1:4416')
+            base_url = self._get_config_setting('getpot_bgutil_baseurl', default='http://127.0.0.1:4416')
             try:
-                response = json.load(ydl.urlopen(Request(
-                    f'{base_url}/ping', extensions={'timeout': self._GET_VSN_TIMEOUT}, proxies={'all': None})))
+                response = json.load(
+                    ydl.urlopen(
+                        Request(
+                            f'{base_url}/ping',
+                            extensions={'timeout': self._GET_VSN_TIMEOUT},
+                            proxies={'all': None},
+                        ),
+                    ),
+                )
             except TransportError as e:
                 # the server may be down
-                self._warn_and_raise(
-                    f'Error reaching GET /ping (caused by {e.__class__.__name__})')
+                self._warn_and_raise(f'Error reaching GET /ping (caused by {e.__class__.__name__})')
             except HTTPError as e:
                 # may be an old server, don't raise
                 self._logger.warning(f'HTTP Error reaching GET /ping (caused by {e!r})', once=True)
@@ -67,23 +73,31 @@ else:
             proxy = self._get_yt_proxy()
 
             try:
-                response = ydl.urlopen(Request(
-                    f'{self.base_url}/get_pot', data=json.dumps({
-                        'client': client,
-                        # keep compat with previous versions
-                        'visitor_data': self.content_binding,
-                        'proxy': proxy,
-                    }).encode(), headers={'Content-Type': 'application/json'},
-                    extensions={'timeout': self._GETPOT_TIMEOUT}, proxies={'all': None}))
+                response = ydl.urlopen(
+                    Request(
+                        f'{self.base_url}/get_pot',
+                        data=json.dumps(
+                            {
+                                'client': client,
+                                # keep compat with previous versions
+                                'visitor_data': self.content_binding,
+                                'proxy': proxy,
+                            },
+                        ).encode(),
+                        headers={'Content-Type': 'application/json'},
+                        extensions={'timeout': self._GETPOT_TIMEOUT},
+                        proxies={'all': None},
+                    ),
+                )
             except Exception as e:
-                raise RequestError(
-                    f'Error reaching POST /get_pot (caused by {e!r})') from e
+                raise RequestError(f'Error reaching POST /get_pot (caused by {e!r})') from e
 
             try:
                 response_json = json.load(response)
             except Exception as e:
                 raise RequestError(
-                    f'Error parsing response JSON (caused by {e!r}). response = {response.read().decode()}') from e
+                    f'Error parsing response JSON (caused by {e!r}). response = {response.read().decode()}',
+                ) from e
 
             if error_msg := response_json.get('error'):
                 raise RequestError(error_msg)
@@ -98,5 +112,4 @@ else:
     def bgutil_HTTP_getpot_preference(rh, request):
         return 0
 
-    __all__ = [BgUtilHTTPGetPOTRH.__class__.__name__,
-               bgutil_HTTP_getpot_preference.__name__]
+    __all__ = [BgUtilHTTPGetPOTRH.__class__.__name__, bgutil_HTTP_getpot_preference.__name__]
