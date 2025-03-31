@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-__version__ = '0.8.0'
+__version__ = '0.8.2'
 
 import typing
 
@@ -61,6 +61,10 @@ class BgUtilBaseGetPOTRH(getpot.GetPOTProvider):
 
     def _warn_and_raise(self, msg, once=True, raise_from=None):
         self._logger.warning(msg, once=once)
+        raise UnsupportedRequest(msg) from raise_from
+
+    def _info_and_raise(self, msg, raise_from=None):
+        self._logger.info(msg)
         raise UnsupportedRequest(msg) from raise_from
 
     @staticmethod

@@ -52,7 +52,13 @@ else:
 
         def _check_script_impl(self, script_path):
             if not os.path.isfile(script_path):
-                self._warn_and_raise(f"Script path doesn't exist: {script_path}")
+                base_url_provided = self._get_config_setting(
+                    'getpot_bgutil_baseurl', default=None) is not None
+                warning_base = f"Script path doesn't exist: {script_path}. "
+                if base_url_provided:  # script path not existing is expected, log info
+                    self._info_and_raise(warning_base + 'This is expected if you are using the server method.')
+                else:
+                    self._warn_and_raise(warning_base + 'Please make sure the script has been transpiled correctly.')
             if os.path.basename(script_path) != 'generate_once.js':
                 self._warn_and_raise('Incorrect script passed to extractor args. Path to generate_once.js required')
             stdout, stderr, returncode = Popen.run(
@@ -92,7 +98,8 @@ else:
                     return node_vsn
                 raise RuntimeError
             except RuntimeError as e:
-                min_vsn_str = 'v' + '.'.join(str(v) for v in self._MIN_NODE_VSN)
+                min_vsn_str = 'v' + '.'.join(str(v)
+                                             for v in self._MIN_NODE_VSN)
                 self._warn_and_raise(
                     f'Node version too low. (got {stdout}, but at least {min_vsn_str} is required)',
                     raise_from=e,
@@ -119,7 +126,11 @@ else:
             **kwargs,
         ):
             # validate script
-            script_path = self._get_config_setting('getpot_bgutil_script', default=self._default_script_path)
+            script_path = os.path.expandvars(
+                self._get_config_setting(
+                    'getpot_bgutil_script', default=self._default_script_path,
+                ),
+            )
             self._check_script(script_path)
             self.script_path = script_path
 
